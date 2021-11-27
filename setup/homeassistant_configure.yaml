@@ -1,0 +1,43 @@
+---
+- hosts: "{{ homeassistant_host }}"
+  become: yes
+  vars_files:
+    - external_vars.yaml
+
+  tasks:
+
+  - name: Create and add {{ user }} to group 'homeassistant'
+    ansible.builtin.user:
+      name: "{{ user }}" 
+      group: homeassistant,sudo
+
+  - name: Generate SSH key for {{ user }} 
+    ansible.builtin.user:
+      name: "{{ user }}" 
+      generate_ssh_key: yes
+
+  - name: Set authorized key from {{ ssh_key }} 
+    ansible.posix.authorized_key:
+      user: "{{ user }}" 
+      state: present
+      key: "{{ ssh_key }}" 
+
+  - name: Change hostname to 'homeassistant'
+    ansible.builtin.hostname:
+      name: homeassistant
+
+  - name: Configure sshd and restart it
+    ansibile.builtin.lineinfile:
+      path: /etc/ssh/sshd_config
+      regex: "^(# *)?{{ item.key }} (yes|no)"
+      line: "{{ item.key }} {{ item.value }}"
+      state: present
+    loop:
+      - { key: PasswordAuthentication, value: no }
+      - { key: PermitRootLogin, value: no }
+      - { key: UsePAM, value: no }
+      - { key: ChallengeResponseAuthentication, value: no }
+      - { key: X11Forwarding, value: yes }
+      - { key: PubkeyAuthentication, value: yes }
+    notify:
+      - restart sshd

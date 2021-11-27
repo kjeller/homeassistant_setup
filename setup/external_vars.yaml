@@ -1,0 +1,3 @@
+homeassistant_host: homeassistant
+user: kjelle
+ssh_key: https://github.com/kjeller.keys
