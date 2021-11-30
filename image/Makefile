@@ -6,6 +6,11 @@ MOUNT_DIR=mnt
 
 LOOP_DEVICE=/dev/loop0
 
+# This does not create the user.
+# It is needed to add authorized ssh keys before a user is created.
+SSH_USER_HOME=home/kjelle/.ssh
+SSH_KEY=https://github.com/kjeller.keys
+
 # lite|full
 VER=lite
 
@@ -28,6 +33,8 @@ build: ${RASPIOS_TARGET}.img
 	losetup -P ${LOOP_DEVICE} ${RASPIOS_TARGET}.img
 	mount ${LOOP_DEVICE}p2 ${MOUNT_DIR}
 	mount ${LOOP_DEVICE}p1 ${MOUNT_DIR}/boot
+	mkdir -p image-root/${SSH_USER_HOME}
+	wget ${SSH_KEY} -O image-root/${SSH_USER_HOME}/authorized_keys
 	cp -r image-root/* ${MOUNT_DIR}/
 	mv ${RASPIOS_TARGET}.img ${RASPIOS_TARGET}_homeassistant.img
 	umount -l ${MOUNT_DIR}/boot

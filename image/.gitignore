@@ -1,3 +1,4 @@
 *.zip
 *.img
 *.sha256
+authorized_keys
