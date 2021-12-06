@@ -1,19 +1,24 @@
-# Download and unzip latest raspios image in this folder
+# Path to where the latest rapsios image will be downloaded to.
 OUTPUT_DIR=download
 
-# Where the image gets temporarily mounted
+# Path to where the image gets temporarily mounted.
 MOUNT_DIR=mnt
+LOOP_DEVICE=/dev/loop10
 
-LOOP_DEVICE=/dev/loop0
-
-# This does not create the user.
+# SSH varibles that must be set. 
 # It is needed to add authorized ssh keys before a user is created.
 SSH_USER_HOME=home/kjelle/.ssh
 SSH_KEY=https://github.com/kjeller.keys
 
+# Path to sensitive files that are needed in the setup e.g. WIFI password
+# Not required.
+SECRETS_DIR=../../secrets/image-root
+
+# One of the following:
 # lite|full
 VER=lite
 
+# One of the following:
 # armhf|arm64
 ARCH=armhf
 
@@ -35,6 +40,7 @@ build: ${RASPIOS_TARGET}.img
 	mount ${LOOP_DEVICE}p1 ${MOUNT_DIR}/boot
 	mkdir -p image-root/${SSH_USER_HOME}
 	wget ${SSH_KEY} -O image-root/${SSH_USER_HOME}/authorized_keys
+	cp -r ${SECRETS_DIR}/* ${MOUNT_DIR}/
 	cp -r image-root/* ${MOUNT_DIR}/
 	mv ${RASPIOS_TARGET}.img ${RASPIOS_TARGET}_homeassistant.img
 	umount -l ${MOUNT_DIR}/boot

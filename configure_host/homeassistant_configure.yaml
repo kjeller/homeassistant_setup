@@ -3,7 +3,6 @@
   become: yes
   vars_files:
     - external_vars.yaml
-
   tasks:
 
   - name: Create and add {{ user }} to group 'homeassistant'
