@@ -1,20 +1,40 @@
 ---
 - hosts: "{{ homeassistant_host }}"
+  remote_user: pi
   become: yes
   vars_files:
     - external_vars.yaml
   tasks:
 
+  - name: Ensure group homeassistant exists
+    ansible.builtin.group:
+      name: homeassistant
+      state: present
+
   - name: Create and add {{ user }} to group 'homeassistant'
     ansible.builtin.user:
       name: "{{ user }}" 
-      group: homeassistant,sudo
+      groups: homeassistant,sudo
 
-  - name: Generate SSH key for {{ user }} 
+  - name: Generate SSH key for {{ user }}
+    become_user: "{{ user }}"
     ansible.builtin.user:
       name: "{{ user }}" 
       generate_ssh_key: yes
+ 
+  - name: Set authorized key from {{ ssh_key }} 
+    ansible.posix.authorized_key:
+      user: "{{ user }}" 
+      state: present
+      key: "{{ ssh_key }}" 
 
   - name: Change hostname to 'homeassistant'
     ansible.builtin.hostname:
       name: homeassistant
+
+  - name: Install required packages
+    ansible.builtin.apt:
+      update_cache: yes
+      pkg:
+        - docker
+        - docker.io
