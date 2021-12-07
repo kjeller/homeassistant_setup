@@ -7,12 +7,12 @@ LOOP_DEVICE=/dev/loop10
 
 # SSH varibles that must be set. 
 # It is needed to add authorized ssh keys before a user is created.
-SSH_USER_HOME=home/kjelle/.ssh
+SSH_USER_HOME=home/pi/.ssh
 SSH_KEY=https://github.com/kjeller.keys
 
 # Path to sensitive files that are needed in the setup e.g. WIFI password
 # Not required.
-SECRETS_DIR=../../secrets/image-root
+SECRETS_DIR=../../secrets/image-boot
 
 # One of the following:
 # lite|full
@@ -34,19 +34,27 @@ RASPIOS_TARGET=${OUTPUT_DIR}/${IMG_NAME}
 all: build
 
 build: ${RASPIOS_TARGET}.img
+	@echo "Mounting image file as loop device.."
 	mkdir -p ${MOUNT_DIR} 
 	losetup -P ${LOOP_DEVICE} ${RASPIOS_TARGET}.img
 	mount ${LOOP_DEVICE}p2 ${MOUNT_DIR}
 	mount ${LOOP_DEVICE}p1 ${MOUNT_DIR}/boot
-	mkdir -p image-root/${SSH_USER_HOME}
-	wget ${SSH_KEY} -O image-root/${SSH_USER_HOME}/authorized_keys
-	cp -r ${SECRETS_DIR}/* ${MOUNT_DIR}/
+	@echo "Copying authorized keys to user home"
+	mkdir -p ${MOUNT_DIR}/${SSH_USER_HOME}
+	wget ${SSH_KEY} -O ${MOUNT_DIR}/${SSH_USER_HOME}/authorized_keys
+	@echo "Copying secret wpa_supplicant file into boot partition"
+	cp -r ${SECRETS_DIR}/* ${MOUNT_DIR}/boot/
+	@echo "Enabling ssh server on rpi on boot"
+	touch ${MOUNT_DIR}/boot/ssh
 	cp -r image-root/* ${MOUNT_DIR}/
+	@echo "Renaming altered image filename"
 	mv ${RASPIOS_TARGET}.img ${RASPIOS_TARGET}_homeassistant.img
+	@echo "Cleaning and unmounting loop device"
 	umount -l ${MOUNT_DIR}/boot
 	umount -l ${MOUNT_DIR}
 	losetup -d ${LOOP_DEVICE}
 	rm -rf ${MOUNT_DIR}
+	@echo "Done altering image!"
 
 ${RASPIOS_TARGET}.img: ${RASPIOS_TARGET}.zip
 	unzip $< -d ${OUTPUT_DIR}
