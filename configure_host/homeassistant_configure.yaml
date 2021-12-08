@@ -17,7 +17,6 @@
       groups: homeassistant,sudo
 
   - name: Generate SSH key for {{ user }}
-    become_user: "{{ user }}"
     ansible.builtin.user:
       name: "{{ user }}" 
       generate_ssh_key: yes
@@ -38,3 +37,14 @@
       pkg:
         - docker
         - docker.io
+        - docker-compose
+
+  - name: Clone homeassistant config to host
+    ansible.builtin.git:
+      repo: https://github.com/kjeller/homeassistant_config.git
+      dest: "/home/{{ user }}/homeassistant"
+
+  - name: Start homeassistant docker compose
+    community.docker.docker_compose:
+      project_src: "/home/{{ user }}/homeassistant"
+    register: output
